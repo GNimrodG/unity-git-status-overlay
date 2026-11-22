@@ -1,0 +1,26 @@
+{
+  "name": "com.data-unknown.git-status-overlay",
+  "displayName": "Git Status Overlay",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "VS Code-style git status inside the Unity editor: U/M/D letters in the Project window, changed GameObjects and prefab-instance overrides in the Hierarchy (diffed from the scene YAML), changed properties in the Inspector, and prefab overrides at a glance.",
+  "author": {
+    "name": "GNimrodG",
+    "url": "https://github.com/GNimrodG"
+  },
+  "license": "MIT",
+  "documentationUrl": "https://github.com/GNimrodG/unity-git-status-overlay#readme",
+  "changelogUrl": "https://github.com/GNimrodG/unity-git-status-overlay/blob/main/CHANGELOG.md",
+  "keywords": [
+    "git",
+    "version control",
+    "hierarchy",
+    "inspector",
+    "prefab",
+    "overrides",
+    "editor"
+  ],
+  "legacyFolders": {
+    "Assets\\GitStatusOverlay": "aff8356e9dff86645a7193ac26eda286"
+  }
+}

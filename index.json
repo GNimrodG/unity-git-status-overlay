@@ -1,0 +1,68 @@
+{
+  "name": "data-unknown VPM: Git Status Overlay",
+  "id": "com.data-unknown.git-status-overlay.listing",
+  "url": "https://raw.githubusercontent.com/GNimrodG/unity-git-status-overlay/vpm/index.json",
+  "author": "GNimrodG",
+  "packages": {
+    "com.data-unknown.git-status-overlay": {
+      "versions": {
+        "1.1.0": {
+          "name": "com.data-unknown.git-status-overlay",
+          "displayName": "Git Status Overlay",
+          "version": "1.1.0",
+          "unity": "2022.3",
+          "description": "VS Code-style git status inside the Unity editor: U/M/D letters in the Project window, changed GameObjects and prefab-instance overrides in the Hierarchy (diffed from the scene YAML), changed properties in the Inspector, and prefab overrides at a glance.",
+          "author": {
+            "name": "GNimrodG",
+            "url": "https://github.com/GNimrodG"
+          },
+          "license": "MIT",
+          "documentationUrl": "https://github.com/GNimrodG/unity-git-status-overlay#readme",
+          "changelogUrl": "https://github.com/GNimrodG/unity-git-status-overlay/blob/main/CHANGELOG.md",
+          "keywords": [
+            "git",
+            "version control",
+            "hierarchy",
+            "inspector",
+            "prefab",
+            "overrides",
+            "editor"
+          ],
+          "legacyFolders": {
+            "Assets\\GitStatusOverlay": "aff8356e9dff86645a7193ac26eda286"
+          },
+          "zipSHA256": "12fdafbc549e3a5262f61208579426fae865b35340df459116a9c765ea57ff2f",
+          "url": "https://github.com/GNimrodG/unity-git-status-overlay/releases/download/v1.1.0/com.data-unknown.git-status-overlay-1.1.0.zip"
+        },
+        "1.0.0": {
+          "name": "com.data-unknown.git-status-overlay",
+          "displayName": "Git Status Overlay",
+          "version": "1.0.0",
+          "unity": "2022.3",
+          "description": "VS Code-style git status inside the Unity editor: U/M/D letters in the Project window, changed GameObjects and prefab-instance overrides in the Hierarchy (diffed from the scene YAML), changed properties in the Inspector, and prefab overrides at a glance.",
+          "author": {
+            "name": "GNimrodG",
+            "url": "https://github.com/GNimrodG"
+          },
+          "license": "MIT",
+          "documentationUrl": "https://github.com/GNimrodG/unity-git-status-overlay#readme",
+          "changelogUrl": "https://github.com/GNimrodG/unity-git-status-overlay/blob/main/CHANGELOG.md",
+          "keywords": [
+            "git",
+            "version control",
+            "hierarchy",
+            "inspector",
+            "prefab",
+            "overrides",
+            "editor"
+          ],
+          "legacyFolders": {
+            "Assets\\GitStatusOverlay": "aff8356e9dff86645a7193ac26eda286"
+          },
+          "zipSHA256": "03f753a716d2020837311541e0564b00afe24fbf26363d5342c1d79b43a2f38f",
+          "url": "https://github.com/GNimrodG/unity-git-status-overlay/releases/download/v1.0.0/com.data-unknown.git-status-overlay-1.0.0.zip"
+        }
+      }
+    }
+  }
+}

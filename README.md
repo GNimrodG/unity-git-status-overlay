@@ -5,6 +5,12 @@ in the Project window, in the Hierarchy (down to the changed GameObject, even in
 Inspector (down to the changed property). It also shows prefab overrides directly in the Hierarchy.
 It has no dependencies: it runs `git` from PATH in the background and never changes the project.
 
+![Hierarchy with git letters and prefab override glyphs, next to the Inspector with changed properties marked](Documentation~/images/showcase.png)
+
+*In this sample scene, the Player's weapon was moved (a prefab-instance override, shown with Unity's blue bar and the
+overlay's amber git bar), a component was added to its head, a crate was rescaled, the light was changed and a
+pickup was added. The scene also has unsaved edits, hence the "saved state" hint.*
+
 ## Install
 
 **[Add to VCC / ALCOM](https://gnimrodg.github.io/unity-git-status-overlay/)** (one click on that page), or add the
@@ -22,6 +28,8 @@ Requirements: Unity 2022.3, `git` on PATH, a project inside a git repository. If
 `Assets/GitStatusOverlay`, installing the package removes it.
 
 ## Project window
+
+<img src="Documentation~/images/project.png" width="400" alt="Project window with R, U and M letters and folder dots">
 
 A letter after each changed asset's name (or at the top-right corner of a thumbnail in icon view):
 
@@ -41,6 +49,8 @@ A letter after each changed asset's name (or at the top-right corner of a thumbn
 - Paths with spaces, brackets and non-ASCII characters work: the tool uses `git status --porcelain=v2 -z`.
 
 ## Hierarchy window
+
+<img src="Documentation~/images/hierarchy.png" width="400" alt="Hierarchy with M and U letters, ancestor markers and prefab override glyphs">
 
 **Git changes in open scenes and the open prefab.** Only `.unity` and `.prefab` files that git sees as modified or untracked are checked.
 For those, the tool compares the saved file with `HEAD` (`git diff -U0 HEAD` plus `git show HEAD:<file>`).
@@ -82,6 +92,10 @@ Changed properties are marked in the Inspector, for scene and prefab-mode object
 - **`[SerializeReference]` data** (e.g. VRCFury components): values under `references.RefIds[n].data` are mapped back to
   the field that holds them (e.g. `content.sliderBitWidthOverride`).
 
+| Changed light (IMGUI editor) | Component added as a prefab override |
+|---|---|
+| ![Light component: Color and Intensity marked, M in the header](Documentation~/images/inspector-directional-light.png) | ![Head: the added Spinner component has U in its header](Documentation~/images/inspector-head.png) |
+
 How it hooks in:
 - **IMGUI editors**: Unity's internal `EditorGUIUtility.beginProperty` callback, which fires for every `EditorGUI.BeginProperty` / `PropertyField`.
   It's reached through reflection; if a Unity version drops it, only these bars disappear.
@@ -122,6 +136,12 @@ Use **Tools → Git Status** (toggles plus *Refresh Now*) or **Preferences → G
   Their component header still lists them. Header marks appear up to 0.3 s after the Inspector rebuilds.
 - **Tag chips**: markers placed after the name can overlap tag chips drawn by other extensions (e.g. `EditorOnly`).
   Switch to right-edge mode if that bothers you.
+
+## Screenshots
+
+The screenshots come from a throwaway sample project built by `Documentation~/Showcase/build-showcase.sh`:
+a committed baseline, then typical working-copy changes, then the Project, Hierarchy and Inspector windows captured
+from the editor. Run it again to refresh them after UI changes.
 
 ## License
 

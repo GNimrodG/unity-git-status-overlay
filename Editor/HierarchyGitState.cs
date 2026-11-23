@@ -389,7 +389,7 @@ namespace GitStatusOverlay
                 if (mark.Unresolved > 0) sb.Append(" (").Append(mark.Unresolved).Append(" not shown: scene settings or objects not loaded)");
                 if (d.Deleted.Count > 0)
                 {
-                    var del = d.Deleted.Where(x => x.Description != null).Select(x => x.Description).ToList();
+                    var del = d.Deleted.Where(x => x.Description != null).Select(DescribeDeleted).ToList();
                     sb.Append("\nDeleted (").Append(del.Count).Append("):");
                     foreach (var s in del.Take(15)) sb.Append("\n  - ").Append(s);
                     if (del.Count > 15) sb.Append("\n  … ").Append(del.Count - 15).Append(" more");
@@ -397,6 +397,34 @@ namespace GitStatusOverlay
             }
             if (mark.IsDirty) sb.Append("\n\nUnsaved changes: markers show the last SAVED state vs HEAD.");
             return sb.ToString();
+        }
+
+        /// <summary>"MonoBehaviour on 'X'" → "VRCFury on 'X'" when the script can be found by its guid.</summary>
+        private static string DescribeDeleted(DeletedBlock d)
+        {
+            const string Generic = "MonoBehaviour";
+            if (d.ScriptGuid == null || !d.Description.StartsWith(Generic, StringComparison.Ordinal)) return d.Description;
+            var path = AssetDatabase.GUIDToAssetPath(d.ScriptGuid);
+            if (string.IsNullOrEmpty(path)) return d.Description;
+            var name = Path.GetFileNameWithoutExtension(path);
+            if (path.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+            {
+                // Scripts compiled into a DLL share its guid: the fileID picks the class.
+                name = null;
+                foreach (var o in AssetDatabase.LoadAllAssetsAtPath(path))
+                {
+                    var script = o as MonoScript;
+                    string g;
+                    long local;
+                    if (script != null && AssetDatabase.TryGetGUIDAndLocalFileIdentifier(script, out g, out local) && local == d.ScriptFileId)
+                    {
+                        name = script.name;
+                        break;
+                    }
+                }
+                if (name == null) return d.Description;
+            }
+            return name + d.Description.Substring(Generic.Length);
         }
 
         // ---------------------------------------------------------------- resolvers

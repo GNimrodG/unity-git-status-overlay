@@ -24,7 +24,7 @@ Then add **Git Status Overlay** to your project. Without VCC, download the zip f
 [latest release](https://github.com/GNimrodG/unity-git-status-overlay/releases/latest) and extract it into
 `Packages/com.data-unknown.git-status-overlay/` in your project.
 
-Requirements: Unity 2022.3, `git` on PATH, a project inside a git repository. If an older copy lives in
+Requirements: Unity 2022.3 or Unity 6.0 (tested with 2022.3.22f1 and 6000.0.67f1), `git` on PATH, a project inside a git repository. If an older copy lives in
 `Assets/GitStatusOverlay`, installing the package removes it.
 
 ## Project window
@@ -126,6 +126,15 @@ Use **Tools → Git Status** (toggles plus *Refresh Now*) or **Preferences → G
   git output is read synchronously, and a 30 s timer kills a stuck git (a domain reload that starts while a thread is
   inside `System.Diagnostics.Process` can hang the editor).
 
+## Works with BluWizard LABS' Enhanced Hierarchy
+
+With [Blu-Hierarchy](https://github.com/BluWizard10/Blu-Hierarchy) (`net.bluwizard.hierarchy`) installed, the Hierarchy
+markers follow its layout, read from its own settings:
+- after the name they go past its tag pill (`EditorOnly`, `MainCamera`, …);
+- in right-edge mode they go left of its component icons, layer pill and active toggle instead of under them;
+- on rows where its icons reach the name, nothing is free: the markers stay after the name on a small backing chip
+  and draw on top, so they remain readable.
+
 ## Limits
 
 - **Objects not shown**: deleted objects can't be shown in the Hierarchy; they appear in the scene row tooltip.
@@ -134,8 +143,10 @@ Use **Tools → Git Status** (toggles plus *Refresh Now*) or **Preferences → G
   If the stage has unsaved structural changes, some matches may be missing.
 - **Inspector**: properties a custom editor draws without `BeginProperty` / `PropertyField` (hand-drawn fields) get no bar.
   Their component header still lists them. Header marks appear up to 0.3 s after the Inspector rebuilds.
-- **Tag chips**: markers placed after the name can overlap tag chips drawn by other extensions (e.g. `EditorOnly`).
-  Switch to right-edge mode if that bothers you.
+- **Other hierarchy extensions**: Blu-Hierarchy is handled (see above). Others that draw right after the name can
+  still overlap the markers; switch to right-edge mode (with a right margin) if that happens.
+- **Unity 6.3+**: the Hierarchy callback uses instance ids (`hierarchyWindowItemOnGUI`); Unity 6.4 moves to entity ids.
+  Tested up to Unity 6.0.
 
 ## Screenshots
 

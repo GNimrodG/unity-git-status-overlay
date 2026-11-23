@@ -53,6 +53,9 @@ namespace GitStatusOverlay
         public long FileId;
         public int ClassId;
         public string Description;
+        /// <summary>MonoBehaviours: guid of m_Script, so the main thread can name the script.</summary>
+        public string ScriptGuid;
+        public long ScriptFileId;
     }
 
     /// <summary>Which YAML documents of a .unity/.prefab file differ between HEAD and the working file.</summary>
@@ -70,6 +73,7 @@ namespace GitStatusOverlay
     {
         private const int PrefabInstanceClass = 1001;
         private const int GameObjectClass = 1;
+        private const int MonoBehaviourClass = 114;
 
         private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
         private static readonly Regex HeaderRx = new Regex(@"^--- !u!(\d+) &(-?\d+)( stripped)?", RegexOptions.Compiled, RegexTimeout);
@@ -223,11 +227,15 @@ namespace GitStatusOverlay
                     }
                     else if (deletedIds.Add(b.FileId))
                     {
+                        var script = b.ClassId == MonoBehaviourClass && !b.Stripped ? oldFile.Field(b, "m_Script") : null;
+                        var guid = script == null ? null : GuidRx.Match(script);
                         result.Deleted.Add(new DeletedBlock
                         {
                             FileId = b.FileId,
                             ClassId = b.ClassId,
                             Description = DescribeDeleted(oldFile, b),
+                            ScriptGuid = guid != null && guid.Success ? guid.Groups[1].Value : null,
+                            ScriptFileId = FirstFileId(script),
                         });
                     }
                 }
@@ -360,15 +368,29 @@ namespace GitStatusOverlay
 
         private static string DescribeDeleted(YamlFile oldFile, Block b)
         {
+            // Stripped blocks are only reference stubs for objects inside a prefab instance (no name, no data). Unity
+            // drops them when nothing references the object any more, or when it reserializes the file (e.g. on an
+            // editor upgrade), so their removal isn't a deleted object.
+            if (b.Stripped) return null;
             if (b.ClassId == GameObjectClass) return "GameObject '" + Unquote(oldFile.Field(b, "m_Name")) + "'";
             if (b.ClassId == PrefabInstanceClass) return "Prefab instance '" + PrefabInstanceName(oldFile, b) + "'";
             var name = ClassName(b.ClassId);
-            if (b.Stripped) return null; // stripped stubs vanish together with their PrefabInstance
             var go = FirstFileId(oldFile.Field(b, "m_GameObject"));
             Block gob;
             if (go != 0 && oldFile.ById.TryGetValue(go, out gob))
-                return name + " on '" + Unquote(oldFile.Field(gob, "m_Name")) + "'";
+                return name + " on '" + GameObjectName(oldFile, gob) + "'";
             return name + " &" + b.FileId.ToString(CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>A GameObject block's name; for a stripped one (inside a prefab instance), the instance's name.</summary>
+        private static string GameObjectName(YamlFile file, Block gameObject)
+        {
+            if (!gameObject.Stripped) return Unquote(file.Field(gameObject, "m_Name"));
+            Block instance;
+            var instanceId = FirstFileId(file.Field(gameObject, "m_PrefabInstance"));
+            return instanceId != 0 && file.ById.TryGetValue(instanceId, out instance)
+                ? PrefabInstanceName(file, instance) + " (prefab instance)"
+                : "?";
         }
 
         private static string PrefabInstanceName(YamlFile file, Block b)

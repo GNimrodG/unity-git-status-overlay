@@ -25,6 +25,13 @@ namespace GitStatusOverlay
         {
             EditorApplication.projectWindowItemOnGUI += OnProjectItem;
             EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyItem;
+            // Re-subscribe once every [InitializeOnLoad] class has run, so the markers draw after (on top of) other
+            // hierarchy extensions such as BluHierarchy.
+            EditorApplication.delayCall += () =>
+            {
+                EditorApplication.hierarchyWindowItemOnGUI -= OnHierarchyItem;
+                EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyItem;
+            };
         }
 
         private static bool Dark => EditorGUIUtility.isProSkin;
@@ -113,22 +120,46 @@ namespace GitStatusOverlay
         {
             private Rect _row;
             private bool _afterName;
+            private bool _crowded;
             private float _cursor;
 
             public static RowLayout For(Rect row, string label, GUIStyle style, float rightMargin)
             {
-                var l = new RowLayout { _row = row, _cursor = row.xMax - rightMargin };
-                if (GitStatusSettings.MarkersAfterName && !string.IsNullOrEmpty(label))
+                return For(row, label, style, rightMargin, 0f, float.MaxValue, 3 * Slot);
+            }
+
+            /// <param name="afterLabel">Space another extension draws right after the label (BluHierarchy's tag pill).</param>
+            /// <param name="rightLimit">Where another extension's right-hand content starts (BluHierarchy's icons).</param>
+            /// <param name="needed">Width of the markers this row will draw.</param>
+            public static RowLayout For(Rect row, string label, GUIStyle style, float rightMargin, float afterLabel, float rightLimit, float needed)
+            {
+                float right = Mathf.Min(row.xMax - rightMargin, rightLimit);
+                var l = new RowLayout { _row = row, _cursor = right };
+                if (!GitStatusSettings.MarkersAfterName || string.IsNullOrEmpty(label)) return l;
+                // Rows start at the item icon (16 px + 2 px gap), then the label.
+                float x = row.x + 18f + style.CalcSize(new GUIContent(label)).x + 2f + afterLabel;
+                bool othersOnRight = rightLimit < row.xMax;
+                if (x + needed <= right || (!othersOnRight && x + 3 * Slot < row.xMax))
                 {
-                    // Rows start at the item icon (16 px + 2 px gap), then the label.
-                    float x = row.x + 18f + style.CalcSize(new GUIContent(label)).x + 2f;
-                    if (x + 3 * Slot < row.xMax)
-                    {
-                        l._afterName = true;
-                        l._cursor = x;
-                    }
+                    l._afterName = true;
+                    l._cursor = x;
+                }
+                else if (othersOnRight)
+                {
+                    // The other extension's icons reach the name: no free space. Stay after the name, on a backing chip.
+                    l._afterName = true;
+                    l._crowded = true;
+                    l._cursor = x;
                 }
                 return l;
+            }
+
+            /// <summary>Next slot; on a crowded row it gets a backing chip so the marker stays readable over icons.</summary>
+            public Rect Take(float width)
+            {
+                var r = Next(width);
+                if (_crowded) DrawBacking(r);
+                return r;
             }
 
             public Rect Next(float width)
@@ -148,7 +179,14 @@ namespace GitStatusOverlay
             }
 
             public bool AfterName => _afterName;
+
+            private static void DrawBacking(Rect r)
+            {
+                var color = Dark ? new Color(0.17f, 0.17f, 0.17f, 0.95f) : new Color(0.86f, 0.86f, 0.86f, 0.95f);
+                GUI.DrawTexture(new Rect(r.x, r.y + 1f, r.width, r.height - 2f), Texture2D.whiteTexture, ScaleMode.StretchToFill, true, 0f, color, 0f, 3f);
+            }
         }
+
 
         // ---------------------------------------------------------------- Project window
 
@@ -262,11 +300,20 @@ namespace GitStatusOverlay
             if (!hasGit && !hasOv && !isStageRoot) return;
 
             var go = EditorUtility.InstanceIDToObject(instanceId) as GameObject;
-            var layout = RowLayout.For(rect, go != null ? go.name : null, EditorStyles.label, GitStatusSettings.HierarchyRightOffset);
+            float needed = (hasGit ? Slot : 0f) + (hasOv ? Slot : 0f) + (isStageRoot ? Slot + 6f : 0f);
+            float afterLabel = 0f, rightLimit = float.MaxValue;
+            if (go != null && BluHierarchyCompat.Present)
+            {
+                float pill = BluHierarchyCompat.TagPillWidth(go);
+                afterLabel = pill > 0f ? pill + 4f : 0f;
+                rightLimit = BluHierarchyCompat.RightContentStart(go, rect) - 2f;
+            }
+            var layout = RowLayout.For(rect, go != null ? go.name : null, EditorStyles.label, GitStatusSettings.HierarchyRightOffset,
+                afterLabel, rightLimit, needed);
 
             if (hasGit)
             {
-                var r = layout.Next(Slot);
+                var r = layout.Take(Slot);
                 if (om.State != GitState.None)
                     Draw(r, LetterFor(om.State), ColorFor(om.State), ObjectTooltip(om));
                 else if (om.ChangedDescendants > 0)
@@ -279,14 +326,14 @@ namespace GitStatusOverlay
                 else if (ov.RemovedComponents && !ov.Properties && !ov.AddedComponents) glyph = "−";
                 else if (ov.HasOwn) glyph = "◆";
                 else glyph = "◇";
-                Draw(layout.Next(Slot), glyph, OverrideColor, ov.Tooltip);
+                Draw(layout.Take(Slot), glyph, OverrideColor, ov.Tooltip);
             }
             if (isStageRoot)
             {
                 // Prefab mode has no scene header row: the root carries the file status.
                 var stage = PrefabStageUtility.GetCurrentPrefabStage();
                 bool dirty = stage != null && stage.scene.isDirty;
-                DrawFileMark(layout.Next(Slot + 6f), HierarchyGitState.PrefabStageMark, dirty, true);
+                DrawFileMark(layout.Take(Slot + 6f), HierarchyGitState.PrefabStageMark, dirty, true);
                 if (dirty) DrawUnsavedHint(layout.Next(UnsavedHintWidth), layout.AfterName);
             }
         }
